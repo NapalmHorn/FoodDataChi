@@ -57,10 +57,14 @@ this csv has many types of rows thrown together.  This fuction returns the type 
     keyRE = r'' # re to match all white space
     if re.search(keyRE, row) :
         return 'blank'
-    keyRE = r'' # re to match no commas
+    keyRE = r'' # re to match serious violation
+    if re.search(keyRE, row) :
+        return 'serious'
+    keyRE = r'' # re to match other no comma
     if re.search(keyRE, row) :
         return 'nocomma'
     print 'Unknown Row Type', row 
+    return 'unknown'
 def main():
 """
 attempts to analyse a huge block of data on Chicago area restaurants.
@@ -85,8 +89,8 @@ attempts to analyse a huge block of data on Chicago area restaurants.
             elif rowType == 'blank':
                 # do nothing its a blank line
                 None
-            elif rowType == 'nocomma' :
-                # handle these weird all text rows
+            elif rowType == 'serious' :
+                # handle these weird all text rows created for serious violations
                 None
             #else try the alternate patterns
             #for debuging purposes we will print fall through cases
