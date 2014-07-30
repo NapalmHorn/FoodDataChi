@@ -45,7 +45,7 @@ def typeOfLine(row):
     if re.match(keyRE, row.split(',')[0]) :
         return 'singleline'
     keyRE = r' | ' # re to match '| list of violations'
-    if keyRE == row[:3]:
+    if keyRE == row[:3] or row[0] == '#':
         return 'cont'
     keyRE = r'^\s*$' # re to match all white space
     if re.match(keyRE, row) :
@@ -56,7 +56,7 @@ def typeOfLine(row):
     keyRE = r',' # re to match other no comma
     if not re.search(keyRE, row) :
         return 'nocomma'
-    print 'Unknown Row Type'
+    #print 'Unknown Row Type'
     return 'unknown'
 
 def singlelineToDict(row):
@@ -87,34 +87,43 @@ def singlelineToDict(row):
         hackedrow_results += ',' + hackedrow.pop(0)
     returnable['Violations' ] = hackedrow_results
     return returnable
+
+def seriousRowDecoder(row):
+    """
+    Works to break down serious violation rows from a huge block of data on Chicago area restaurants.
+    input format "SERIOUS VIOLATION: 7-42-090" or 'SERIOUS CITATION ISSUED: 7-42-090' or 'CRITICAL VIOLATION 7-42-090 CITATION ISSUED.'
+    inconsistent inputs really make this more complex
+    """
+    seriousDict = dict() # a small dictionary decoding the line
+    brokenRow = row.split(' ')
+    # find the code y tokenizing the string
+    while brokenRow:
+        token = brokenRow.pop(-1)
+        if re.search('[\d]+',token): # is violation code
+            #print 'matched token:', token #debuging re
+            seriousDict['number'] = token
+            brokenRow = '' # breaks out of loop
+        else:
+            #print 'Did not match token:', token #debuging re
+            None
+    lcrow = row.lower()
+    # because of inconsistent format a word search seems like the best option to get a good label
+    if 'serious' in lcrow:
+        if 'citation' in lcrow:
+            seriousDict['label'] = 'SERIOUS CITATION'
+        elif 'violation' in lcrow:
+            seriousDict['label'] = 'SERIOUS VIOLATION'
+    elif 'critical' in lcrow:
+        if 'citation' in lcrow:
+            seriousDict['label'] = 'CRITICAL CITATION'
+        elif 'violation' in lcrow:
+            seriousDict['label'] = 'CRITICAL VIOLATION'   
+    return seriousDict
     
 def main():
     """
     attempts to analyse a huge block of data on Chicago area restaurants.
-    """
-    # define variables
-    chiDict =dict()
-    # read the whole file
-    with open('data\food.csv', 'r') as csvfile:
-        # Parse based on csv lib
-        chiData = csv.reader( csvfile )
-        for row in chiData:
-            #Each row read from the csv file is returned as a list of strings. No automatic data type conversion is performed.
-            # try a regular expression match to a pattern
-            rowType = typeOfLine(row)
-            #if it works process data
-            if rowType == 'singleline':
-                # add the dictionary of data from the single to the larger dictionary of data.
-                singlelineDict = singlelineToDict(row)
-                if not singlelineDict['License'] in chiDict.keys():
-                    # I should split up violations into a more useful data structure.
-                    chiDict[ singlelineDict['License']] = singlelineDict
-                else:
-                    # add to existing data
-                    None
-                None
-            elif rowType == 'serious':
-                # Handle serious and critical violations
+                    # Handle multiline logg etries
                 # Split off which establishment these rows correspond to
                 # add to the chiDict entry for that establishment
                 # create a list of serious violations per establishment 
@@ -131,6 +140,33 @@ def main():
                 #   else,
                 #       call a function to add the continuation to the buffer
                 #   go to loop if buffer not blank
+
+    """
+    # define variables
+    chiDict =dict()
+    # read the whole file
+    with open('data\food.csv', 'r') as csvfile:
+        # Parse based on csv lib
+        chiData = csv.reader( csvfile )
+        for row in chiData:
+            #Each row read from the csv file is returned as a list of strings. No automatic data type conversion is performed.
+            # try a regular expression match to a pattern
+            rowType = typeOfLine(row)
+            #if it works process data
+            if rowType == 'singleline':
+                # add the dictionary of data from the single to the larger dictionary of data.
+                # commit working data 
+                singlelineDict = singlelineToDict(row)
+                if not singlelineDict['License'] in chiDict.keys():
+                    # I should split up violations into a more useful data structure.
+                    chiDict[ singlelineDict['License']] = singlelineDict
+                else:
+                    # add to existing data
+                    None
+                None
+            elif rowType == 'serious':
+                seriousDict = seriousRowDecoder(row)
+                # add this to the serious violations database and add it to the appropriate entry in the main database
                 None
             elif rowType == 'blank':
                 # do nothing its a blank line

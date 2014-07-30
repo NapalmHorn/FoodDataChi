@@ -1,5 +1,5 @@
 import unittest
-from fooddata import typeOfLine, singlelineToDict  
+from fooddata import typeOfLine, singlelineToDict, seriousRowDecoder  
 #from testFile import testFunction
 #to test simply run 'python boilerplatetester.py'
 
@@ -84,6 +84,23 @@ class fooddataTestCase(unittest.TestCase):
         self.assertEqual(results ['Longitude'], '-87.64463491821648' )
         self.assertEqual(results ['Location'], r'"(41.942717387425816, -87.64463491821648)"' )
         
+    def test_serious_Row1(self):
+        testCase = r'SERIOUS CITATION ISSUED: 7-42-090'
+        results = seriousRowDecoder(testCase)
+        self.assertEqual(results['label'], 'SERIOUS CITATION' )
+        self.assertEqual(results['number'], '7-42-090' )
+        
+    def test_serious_Row2(self):    
+        testCase = r'CRITICAL VIOLATION 7-42-090 CITATION ISSUED.'
+        results = seriousRowDecoder(testCase)
+        self.assertEqual(results['label'], 'CRITICAL CITATION' )
+        self.assertEqual(results['number'], '7-42-090' )
+    
+    def test_serious_Row3(self):
+        testCase = r'SERIOUS VIOLATION: 7-42-090'
+        results = seriousRowDecoder(testCase)
+        self.assertEqual(results['label'], 'SERIOUS VIOLATION' )
+        self.assertEqual(results['number'], '7-42-090' )
         
 if __name__ == '__main__':
     unittest.main()
