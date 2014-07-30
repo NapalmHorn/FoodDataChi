@@ -95,17 +95,11 @@ def seriousRowDecoder(row):
     inconsistent inputs really make this more complex
     """
     seriousDict = dict() # a small dictionary decoding the line
-    brokenRow = row.split(' ')
-    # find the code y tokenizing the string
-    while brokenRow:
-        token = brokenRow.pop(-1)
-        if re.search('[\d]+',token): # is violation code
-            #print 'matched token:', token #debuging re
-            seriousDict['number'] = token
-            brokenRow = '' # breaks out of loop
-        else:
-            #print 'Did not match token:', token #debuging re
-            None
+    token = re.search(r'([\d-]+)',row) #find the code number and loadit into token.group(1)
+    if token:
+        seriousDict['number'] = token.group(1)
+    else:
+        print 'code number detection has failed in seriousRowDecoder'
     lcrow = row.lower()
     # because of inconsistent format a word search seems like the best option to get a good label
     if 'serious' in lcrow:
