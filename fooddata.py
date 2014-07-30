@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Analyze Chicago's food inspection data
+# Analyse Chicago's food inspection data
 # and make a series of tasty pie charts and tables
 #  Outcomes of a health-inspection (pass, fail)
 #  Risk levels
@@ -16,6 +16,7 @@ def makeChart(subsetDict):
     matplotlib.pyplot.pie (  wedges, labels=label_list)
     matplotlib.pyplot.show()
     return None
+
 def inspectionResults(foodDict) :
     """This makes a very basic pie chart that shows how often eateries pass inspection  """  
     # pull out inspection data
@@ -26,14 +27,17 @@ def commonViolationsChart(foodDict):
     """Prints a pie chart demonstrating the most common violations of health code cited """    
     # pull out violation data
     return makeChart(vDict)
+
 def restaurantsTypes(foodDict):
     """Prints a pie chart demonstrating the proportions of restaurant types"""    
     # pull out restaurant type data
     return makeChart(rDict)
+
 def relativeRisk(foodDict):
     """makes a bar chart comparing the violation percentage by restaurant type"""
     #for each violation keep of tally of the associated restaurant type
     #compare to the total number restaurants in that type
+
 def typeOfLine(row):
     """this csv has many types of rows thrown together.  This fuction returns the type of row."""
     keyRE = '\d+' 
@@ -56,7 +60,8 @@ def typeOfLine(row):
     return 'unknown'
 
 def singlelineToDict(row):
-    """ takes a row already IDed to be a single row and returns a dict with matching lables and data for that row.
+    """ 
+    takes a row already IDed to be a single row and returns a dict with matching labels and data for that row.
     input is single row format:
     Inspection ID,DBA Name,AKA Name,License #,Facility Type,Risk,Address,City,State,Zip,Inspection Date,Inspection Type,Results,Violations,Latitude,Longitude,Location
     """
@@ -76,7 +81,7 @@ def singlelineToDict(row):
     hackedrow.pop(-1)
     while labelspart2: # handle everything after the weird results sections
         returnable[ labelspart2.pop(-1)] = hackedrow.pop(-1)
-    #dump the rest of it into results
+    #dump the rest of hackedrow into results entry for violations
     hackedrow_results = hackedrow.pop(0)
     while hackedrow:
         hackedrow_results += ',' + hackedrow.pop(0)
@@ -88,7 +93,7 @@ def main():
     attempts to analyse a huge block of data on Chicago area restaurants.
     """
     # define variables
-    chiDict ={}
+    chiDict =dict()
     # read the whole file
     with open('data\food.csv', 'r') as csvfile:
         # Parse based on csv lib
@@ -99,16 +104,39 @@ def main():
             rowType = typeOfLine(row)
             #if it works process data
             if rowType == 'singleline':
-                # process a single line
+                # add the dictionary of data from the single to the larger dictionary of data.
+                singlelineDict = singlelineToDict(row)
+                if not singlelineDict['License'] in chiDict.keys():
+                    # I should split up violations into a more useful data structure.
+                    chiDict[ singlelineDict['License']] = singlelineDict
+                else:
+                    # add to existing data
+                    None
                 None
-            elif rowType == 'cont':
-                # process a continuation
+            elif rowType == 'serious':
+                # Handle serious and critical violations
+                # Split off which establishment these rows correspond to
+                # add to the chiDict entry for that establishment
+                # create a list of serious violations per establishment 
+                # work through next line and link to continuation code if applicable 
+                #   That work flow for a multi line comment should be something link this pseudo-code
+                #   ID 1st line of serious violation
+                #   call a function that takes the first line and breaks it down into a good data structure 'buffer'.
+                #   loop
+                #   process the next line.
+                #   if its not a continuation, 
+                #       commit the buffer to the dictionary
+                #       blank the 'buffer' signalling that there is nothing to commit next cycle
+                #       process the line normally
+                #   else,
+                #       call a function to add the continuation to the buffer
+                #   go to loop if buffer not blank
                 None
             elif rowType == 'blank':
                 # do nothing its a blank line
                 None
-            elif rowType == 'serious' :
-                # handle these weird all text rows created for serious violations
+            elif rowType == 'cont' :
+                # process a continuation
                 None
             #else try the alternate patterns
             #for debuging purposes we will print fall through cases
