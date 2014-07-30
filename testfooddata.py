@@ -1,9 +1,9 @@
 import unittest
-from fooddata import typeOfLine  
+from fooddata import typeOfLine, singlelineToDict  
 #from testFile import testFunction
 #to test simply run 'python boilerplatetester.py'
 
-class boilerplateTestCase(unittest.TestCase):
+class fooddataTestCase(unittest.TestCase):
     def test_single_good_line(self): #
         """ should succeed and demonstrates that typeOfLine can find a good single line log entry """
         expectedResult = 'singleline'
@@ -61,5 +61,29 @@ class boilerplateTestCase(unittest.TestCase):
         testCase = 'LABEL ALL FOODS WITH NAME AND DATE.",41.96846837763899,-87.69299972102974,"(41.96846837763899, -87.69299972102974)"'
         self.assertTrue(typeOfLine(testCase) != expectedResult)
     
+    def test_singlerowToDict(self):
+        """takes a row already IDed to be a single row and returns a dict with matching lables and data for that row.
+        then each Item is tested"""
+        testCase = r'585972,MR.TACO,MR.TACO,2099526,Restaurant,Risk 1 (High),3330-3332 N BROADWAY ,CHICAGO,IL,60657,07/25/2011,License Re-Inspection,Pass,"18. NO EVIDENCE OF RODENT OR INSECT OUTER OPENINGS PROTECTED/RODENT PROOFED, A WRITTEN LOG SHALL BE MAINTAINED AVAILABLE TO THE INSPECTORS - Comments:  | 32. FOOD AND NON-FOOD CONTACT SURFACES PROPERLY DESIGNED, CONSTRUCTED AND MAINTAINED - Comments:  | 34. FLOORS: CONSTRUCTED PER CODE, CLEANED, GOOD REPAIR, COVERING INSTALLED, DUST-LESS CLEANING METHODS USED - Comments:  | 35. WALLS, CEILINGS, ATTACHED EQUIPMENT CONSTRUCTED PER CODE: GOOD REPAIR, SURFACES CLEAN AND DUST-LESS CLEANING METHODS - Comments:  | 36. LIGHTING: REQUIRED MINIMUM FOOT-CANDLES OF LIGHT PROVIDED, FIXTURES SHIELDED - Comments:  | 40. REFRIGERATION AND METAL STEM THERMOMETERS PROVIDED AND CONSPICUOUS - Comments: ",41.942717387425816,-87.64463491821648,"(41.942717387425816, -87.64463491821648)"'
+        results  =  singlelineToDict(testCase)
+        self.assertEqual(results ['InspectionID'], '585972' )
+        self.assertEqual(results ['DBAName'], 'MR.TACO' )
+        self.assertEqual(results ['AKAName'], 'MR.TACO' )
+        self.assertEqual(results ['License'], '2099526' )
+        self.assertEqual(results ['FacilityType'], 'Restaurant' )
+        self.assertEqual(results ['Risk'], r'Risk 1 (High)' )
+        self.assertEqual(results ['Address'], '3330-3332 N BROADWAY ' )
+        self.assertEqual(results ['City'], 'CHICAGO' )
+        self.assertEqual(results ['State'], 'IL' )
+        self.assertEqual(results ['Zip'], '60657' )
+        self.assertEqual(results ['InspectionDate'], r'07/25/2011' )
+        self.assertEqual(results ['InspectionType'], 'License Re-Inspection' )
+        self.assertEqual(results ['Results'], 'Pass' )
+        self.assertEqual(results ['Violations'], r'"18. NO EVIDENCE OF RODENT OR INSECT OUTER OPENINGS PROTECTED/RODENT PROOFED, A WRITTEN LOG SHALL BE MAINTAINED AVAILABLE TO THE INSPECTORS - Comments:  | 32. FOOD AND NON-FOOD CONTACT SURFACES PROPERLY DESIGNED, CONSTRUCTED AND MAINTAINED - Comments:  | 34. FLOORS: CONSTRUCTED PER CODE, CLEANED, GOOD REPAIR, COVERING INSTALLED, DUST-LESS CLEANING METHODS USED - Comments:  | 35. WALLS, CEILINGS, ATTACHED EQUIPMENT CONSTRUCTED PER CODE: GOOD REPAIR, SURFACES CLEAN AND DUST-LESS CLEANING METHODS - Comments:  | 36. LIGHTING: REQUIRED MINIMUM FOOT-CANDLES OF LIGHT PROVIDED, FIXTURES SHIELDED - Comments:  | 40. REFRIGERATION AND METAL STEM THERMOMETERS PROVIDED AND CONSPICUOUS - Comments: "' )
+        self.assertEqual(results ['Latitude'], '41.942717387425816' )
+        self.assertEqual(results ['Longitude'], '-87.64463491821648' )
+        self.assertEqual(results ['Location'], r'"(41.942717387425816, -87.64463491821648)"' )
+        
+        
 if __name__ == '__main__':
     unittest.main()

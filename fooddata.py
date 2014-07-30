@@ -54,6 +54,35 @@ def typeOfLine(row):
         return 'nocomma'
     print 'Unknown Row Type'
     return 'unknown'
+
+def singlelineToDict(row):
+    """ takes a row already IDed to be a single row and returns a dict with matching lables and data for that row.
+    input is single row format:
+    Inspection ID,DBA Name,AKA Name,License #,Facility Type,Risk,Address,City,State,Zip,Inspection Date,Inspection Type,Results,Violations,Latitude,Longitude,Location
+    """
+    returnable = dict() # create the dictionary that will later be returned.
+    hackedrow = row.split(',') #break row on comma
+    #
+    #next we create a loop to build the returnable dict
+    #
+    labelspart1 = ['InspectionID','DBAName', 'AKAName', 'License' , 'FacilityType', 'Risk', 'Address', 'City', 'State', 'Zip', 'InspectionDate', 'InspectionType', 'Results']
+    labelspart2 = [ 'Latitude', 'Longitude']
+    # assign and remove the first remaining datum in the hackedrow to the first remaining label which will also be removed
+    while labelspart1: # handle everything before the weird results sections
+        returnable[ labelspart1.pop(0)] = hackedrow.pop(0)
+    #location is actually the last 2 values
+    returnable['Location'] = hackedrow[-2] + ',' + hackedrow[-1]
+    hackedrow.pop(-1)
+    hackedrow.pop(-1)
+    while labelspart2: # handle everything after the weird results sections
+        returnable[ labelspart2.pop(-1)] = hackedrow.pop(-1)
+    #dump the rest of it into results
+    hackedrow_results = hackedrow.pop(0)
+    while hackedrow:
+        hackedrow_results += ',' + hackedrow.pop(0)
+    returnable['Violations' ] = hackedrow_results
+    return returnable
+    
 def main():
     """
     attempts to analyse a huge block of data on Chicago area restaurants.
