@@ -1,5 +1,5 @@
 import unittest
-from fooddata import typeOfLine, singlelineToDict, seriousRowDecoder  
+from fooddata import typeOfLine, singlelineToDict, seriousRowDecoder , violationsToList 
 #from testFile import testFunction
 #to test simply run 'python boilerplatetester.py'
 
@@ -101,6 +101,12 @@ class fooddataTestCase(unittest.TestCase):
         results = seriousRowDecoder(testCase)
         self.assertEqual(results['label'], 'SERIOUS VIOLATION' )
         self.assertEqual(results['number'], '7-42-090' )
+        
+    def test_violations(self):
+        testCase = r'"18. NO EVIDENCE OF RODENT OR INSECT OUTER OPENINGS PROTECTED/RODENT PROOFED, A WRITTEN LOG SHALL BE MAINTAINED AVAILABLE TO THE INSPECTORS - Comments:  | 32. FOOD AND NON-FOOD CONTACT SURFACES PROPERLY DESIGNED, CONSTRUCTED AND MAINTAINED - Comments:  | 34. FLOORS: CONSTRUCTED PER CODE, CLEANED, GOOD REPAIR, COVERING INSTALLED, DUST-LESS CLEANING METHODS USED - Comments:  | 35. WALLS, CEILINGS, ATTACHED EQUIPMENT CONSTRUCTED PER CODE: GOOD REPAIR, SURFACES CLEAN AND DUST-LESS CLEANING METHODS - Comments:  | 36. LIGHTING: REQUIRED MINIMUM FOOT-CANDLES OF LIGHT PROVIDED, FIXTURES SHIELDED - Comments:  | 40. REFRIGERATION AND METAL STEM THERMOMETERS PROVIDED AND CONSPICUOUS - Comments: "'
+        results = violationsToList(testCase)
+        expectedResult = ['18. NO EVIDENCE OF RODENT OR INSECT OUTER OPENINGS PROTECTED/RODENT PROOFED, A WRITTEN LOG SHALL BE MAINTAINED AVAILABLE TO THE INSPECTORS - Comments:', '32. FOOD AND NON-FOOD CONTACT SURFACES PROPERLY DESIGNED, CONSTRUCTED AND MAINTAINED - Comments:', '34. FLOORS: CONSTRUCTED PER CODE, CLEANED, GOOD REPAIR, COVERING INSTALLED, DUST-LESS CLEANING METHODS USED - Comments:', '35. WALLS, CEILINGS, ATTACHED EQUIPMENT CONSTRUCTED PER CODE: GOOD REPAIR, SURFACES CLEAN AND DUST-LESS CLEANING METHODS - Comments:', '36. LIGHTING: REQUIRED MINIMUM FOOT-CANDLES OF LIGHT PROVIDED, FIXTURES SHIELDED - Comments:', '40. REFRIGERATION AND METAL STEM THERMOMETERS PROVIDED AND CONSPICUOUS - Comments: \"' ]
+        self.assertEqual(results, expectedResult )
         
 if __name__ == '__main__':
     unittest.main()

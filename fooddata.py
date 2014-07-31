@@ -33,6 +33,26 @@ def restaurantsTypes(foodDict):
     # pull out restaurant type data
     return makeChart(rDict)
 
+def violationsToList(str):
+        """
+        Takes a string violations and converts that to a list.
+        """
+        violations = list()
+        numberToken = '([\d\.]+\s+)'
+        matchshitck = re.search(numberToken ,str)
+
+        while str and matchshitck: # while there are still tokens on the list 
+            secondPlace = re.search(numberToken ,str[matchshitck.end(1):])
+            if secondPlace :
+                token = str[matchshitck.start(1):matchshitck.start(1) + secondPlace.start(1)] # take the first token
+                str = str[secondPlace.start(1) + matchshitck.end(1):] # cut off the last entry
+                matchshitck = re.search(numberToken ,str) #because there is a secondPlace its there I just run the command to find it.
+                violations.append(token) #add this token to the list.
+            else:
+                violations.append(str) # if there is no more append the remaining text as the last in list.
+                matchshitck = None
+        return violations
+        
 def relativeRisk(foodDict):
     """makes a bar chart comparing the violation percentage by restaurant type"""
     #for each violation keep of tally of the associated restaurant type
@@ -95,7 +115,7 @@ def seriousRowDecoder(row):
     inconsistent inputs really make this more complex
     """
     seriousDict = dict() # a small dictionary decoding the line
-    token = re.search(r'([\d-]+)',row) #find the code number and loadit into token.group(1)
+    token = re.search(r'([\d-]+)',row) #find the code number and load it into token.group(1)
     if token:
         seriousDict['number'] = token.group(1)
     else:
@@ -111,7 +131,7 @@ def seriousRowDecoder(row):
         if 'citation' in lcrow:
             seriousDict['label'] = 'CRITICAL CITATION'
         elif 'violation' in lcrow:
-            seriousDict['label'] = 'CRITICAL VIOLATION'   
+            seriousDict['label'] = 'CRITICAL VIOLATION'
     return seriousDict
     
 def main():
