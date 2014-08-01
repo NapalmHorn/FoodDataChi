@@ -33,18 +33,33 @@ def restaurantsTypes(foodDict):
     # pull out restaurant type data
     return makeChart(rDict)
 
+def additonalViolations(struct, row):
+    """
+    This function will take a uncommitted data structure of an inspection line
+    and add its continuation to the violations list.
+    """
+    # for vitem in struct['Violations']:
+        # print len(struct['Violations']), vitem[-40:]
+    # for  vitem in violationsToList(row) :
+        # print "to add:" , vitem[-40:]
+    struct['Violations'] += violationsToList(row) 
+    # for vitem in struct['Violations']:
+        # print len(struct['Violations']), vitem[-40:]
+    return struct
+    
 def violationsToList(str):
         """
         Takes a string violations and converts that to a list.
         """
         violations = list()
-        numberToken = '([\d\.]+\s+)'
+        numberToken = '([\d]+\.\s+)' #fixed to require 1 digit AND a dot
         matchshitck = re.search(numberToken ,str)
 
         while str and matchshitck: # while there are still tokens on the list 
             secondPlace = re.search(numberToken ,str[matchshitck.end(1):])
             if secondPlace :
-                token = str[matchshitck.start(1):matchshitck.start(1) + secondPlace.start(1)] # take the first token
+                token = str[matchshitck.start(1):matchshitck.end(1) + secondPlace.start(1)] # take the first token fixed to get right endpoint
+                #print "token:", token[:20], '...' , token[-20:]
                 str = str[secondPlace.start(1) + matchshitck.end(1):] # cut off the last entry
                 matchshitck = re.search(numberToken ,str) #because there is a secondPlace its there I just run the command to find it.
                 violations.append(token) #add this token to the list.
