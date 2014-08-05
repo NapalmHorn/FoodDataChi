@@ -19,6 +19,7 @@ def makeChart(chartableDict):
         "control chart options" => the options to be sent to google charts, 
             if absent or blank defaults will be used
         all other keys are labels for the new chart, and correspond to data points.
+        'control open chart' => if present indicates chart should open automatically
     Output: a file named whatever the chartableDict['control chart title'] + '.html',
         or, if absent or blank, chart\d+.html w/ \d+ as lowest possible choice starting at zero
     """ 
@@ -42,10 +43,14 @@ def makeChart(chartableDict):
   </body>
 </html>
     """
+    controlOpenChart = None #thus it does not open by default
     controlChartTitle = ''# title of chart
     controlChartOptions = '' # the options properly formatted to be loaded into the HTML file
     htmlDataChart = '' # the working string of html of chart data 
     # check for control chart title and set it
+    if 'control open chart' in chartableDict.keys():
+        controlOpenChart = chartableDict['control open chart']
+        del chartableDict['control open chart']
     if 'control chart title' in chartableDict.keys() :
         if chartableDict['control chart title']:
             controlChartTitle = chartableDict['control chart title'] # load it into controlChartTitle
@@ -88,7 +93,8 @@ def makeChart(chartableDict):
     f.write(controlChartOptions)
     f.write(htmlFollowingChart)
     f.close()
-    webbrowser.open_new_tab(controlChartTitle) # call web browser to open html file.
+    if controlOpenChart:
+        webbrowser.open_new_tab(controlChartTitle) # call web browser to open html file.
     return None
 
 def inspectionResults(foodDict) :
@@ -115,7 +121,19 @@ def commonViolationsChart(foodDict):
 
 def restaurantsTypes(foodDict):
     """Prints a pie chart demonstrating the proportions of restaurant types"""    
-    # pull out restaurant type data
+    rDict = dict()
+    if 'control chart title' in foodDict:
+        rDict['control chart title'] = foodDict ['control chart title']
+        del foodDict ['control chart title']
+    if 'control chart options' in foodDict:
+        rDict['control chart options'] = foodDict ['control chart options']
+        del foodDict ['control chart options']
+    for i in foodDict.keys() : # for each inspection 
+        if re.search('\S',foodDict[i]['FacilityType']): # has non-space characters
+            if foodDict[i]['FacilityType'] in rDict.keys(): #If the 'FacilityType' is in the dict
+                rDict[ foodDict[i]['FacilityType'] ] += 1 # increase the tally
+            else:
+                rDict[ foodDict[i]['FacilityType'] ] = 1 # otherwise start a new tally
     return makeChart(rDict)
 
 def additonalViolations(struct, row):
@@ -180,6 +198,7 @@ def singlelineToDict(row):
     takes a row already IDed to be a single row and returns a dict with matching labels and data for that row.
     input is single row format:
     Inspection ID,DBA Name,AKA Name,License #,Facility Type,Risk,Address,City,State,Zip,Inspection Date,Inspection Type,Results,Violations,Latitude,Longitude,Location
+    Now lists violations and upper case all data due to inconsistent data entry
     """
     returnable = dict() # create the dictionary that will later be returned.
     hackedrow = row.split(',') #break row on comma
@@ -190,7 +209,7 @@ def singlelineToDict(row):
     labelspart2 = [ 'Latitude', 'Longitude']
     # assign and remove the first remaining datum in the hackedrow to the first remaining label which will also be removed
     while labelspart1: # handle everything before the weird results sections
-        returnable[ labelspart1.pop(0)] = hackedrow.pop(0)
+        returnable[ labelspart1.pop(0)] = hackedrow.pop(0).upper()
     #location is actually the last 2 values
     returnable['Location'] = hackedrow[-2] + ',' + hackedrow[-1]
     hackedrow.pop(-1)
@@ -204,7 +223,7 @@ def singlelineToDict(row):
         hackedrow_results = ''
     while hackedrow:
         hackedrow_results += ',' + hackedrow.pop(0)
-    returnable['Violations' ] = hackedrow_results
+    returnable['Violations' ] = violationsToList(hackedrow_results)
     return returnable
 
 def seriousRowDecoder(row):
