@@ -6,15 +6,89 @@
 #  Breakdown of establishment types
 #  Most common code violations
 import csv
-# import matplotlib
+# import matplotlib # forget matplotlib I'm going to use https://developers.google.com/chart as no install is required
 import re
+import os.path # used by makeChart to create new unnamed charts 
+import webbrowser # used by makeChart to open the freshly created chart.
 
-def makeChart(subsetDict):
-    """Takes a dictionary with the subset of data that we want and makes a chart """ 
-    label_list = [subsetDict.keys() ]  #turns keys int a a list
-    wedges = [subsetDict[x] for x in subsetDict.keys()] # turns data into a list with the same order
-    matplotlib.pyplot.pie (  wedges, labels=label_list)
-    matplotlib.pyplot.show()
+def makeChart(chartableDict):
+    """Takes a dictionary with the subset of data that we want and makes a chart 
+    Input : chartableDict which can have special entries 
+        "control chart title" => the title of the new chart,
+            if absent or blank title will be 'chart title'
+        "control chart options" => the options to be sent to google charts, 
+            if absent or blank defaults will be used
+        all other keys are labels for the new chart, and correspond to data points.
+    Output: a file named whatever the chartableDict['control chart title'] + '.html',
+        or, if absent or blank, chart\d+.html w/ \d+ as lowest possible choice starting at zero
+    """ 
+    htmlPriorToChart = """<html>
+  <head>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Label', 'Data'],"""
+    htmlFollowingChart = """
+        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+        chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="piechart_3d" style="width: 900px; height: 500px;"></div>
+  </body>
+</html>
+    """
+    controlChartTitle = ''# title of chart
+    controlChartOptions = '' # the options properly formatted to be loaded into the HTML file
+    htmlDataChart = '' # the working string of html of chart data 
+    # check for control chart title and set it
+    if 'control chart title' in chartableDict.keys() :
+        if chartableDict['control chart title']:
+            controlChartTitle = chartableDict['control chart title'] # load it into controlChartTitle
+        else:
+            chartNumber = 1
+            while chartNumber :
+                if not os.path.isfile('chart' + str(chartNumber - 1) + '.html' ):
+                    controlChartTitle = 'chart' + str(chartNumber - 1) + '.html'
+                    chartNumber = 0
+                else:
+                    chartNumber += 1
+        del chartableDict['control chart title'] # remove control key
+    else:    
+        # if absent or blank pick first available generic chart name
+        chartNumber = 1
+        while chartNumber :
+            if not os.path.isfile('chart' + str(chartNumber - 1) + '.html' ):
+                controlChartTitle = 'chart' + str(chartNumber - 1) + '.html'
+                chartNumber = 0
+            else:
+                chartNumber += 1
+    # create the options strings from control chart options
+    if 'control chart options' in chartableDict.keys():
+        if chartableDict['control chart options'] :
+            controlChartOptions = chartableDict['control chart options']
+        del chartableDict['control chart options'] # remove control key
+    else:
+        None # leave it blank
+     # for each key remaining treat them as a label 
+    for datum in chartableDict.keys():
+        # add a label and data row to the htmlDataChart
+        if htmlDataChart:
+            htmlDataChart +=',' # if its not blank put a comma at the end, saves unneeded trailing comma 
+        htmlDataChart += "\n          ['" + str(datum) + "',   " + str(chartableDict[datum]) + '  ]' 
+    htmlDataChart += '\n        ]);\n'    #close chart
+    # write all 4 parts of HTML to the file.
+    f = open( controlChartTitle ,'w')
+    f.write(htmlPriorToChart)
+    f.write(htmlDataChart)
+    f.write(controlChartOptions)
+    f.write(htmlFollowingChart)
+    f.close()
+    webbrowser.open_new_tab(controlChartTitle) # call web browser to open html file.
     return None
 
 def inspectionResults(foodDict) :
@@ -38,13 +112,9 @@ def additonalViolations(struct, row):
     This function will take a uncommitted data structure of an inspection line
     and add its continuation to the violations list.
     """
-    # for vitem in struct['Violations']:
-        # print len(struct['Violations']), vitem[-40:]
-    # for  vitem in violationsToList(row) :
-        # print "to add:" , vitem[-40:]
+
     struct['Violations'] += violationsToList(row) 
-    # for vitem in struct['Violations']:
-        # print len(struct['Violations']), vitem[-40:]
+
     return struct
     
 def violationsToList(str):
@@ -172,7 +242,8 @@ def main():
 
     """
     # define variables
-    chiDict =dict()
+    chiDict =dict() # the large dictionary of all lines processed
+    workingDict = dict() #the current working file before committing to chiDict
     # read the whole file
     with open('data\food.csv', 'r') as csvfile:
         # Parse based on csv lib
@@ -185,14 +256,13 @@ def main():
             if rowType == 'singleline':
                 # add the dictionary of data from the single to the larger dictionary of data.
                 # commit working data 
-                singlelineDict = singlelineToDict(row)
-                if not singlelineDict['License'] in chiDict.keys():
+                if not workingDict['License'] in chiDict.keys():
                     # I should split up violations into a more useful data structure.
-                    chiDict[ singlelineDict['License']] = singlelineDict
+                    chiDict[ workingDict['License']] = workingDict
                 else:
                     # add to existing data
                     None
-                None
+                workingDict = singlelineToDict(row)   
             elif rowType == 'serious':
                 seriousDict = seriousRowDecoder(row)
                 # add this to the serious violations database and add it to the appropriate entry in the main database
@@ -201,10 +271,12 @@ def main():
                 # do nothing its a blank line
                 None
             elif rowType == 'cont' :
-                # process a continuation
+                workingDict = additonalViolations(workingDict, row)
                 None
             #else try the alternate patterns
-            #for debuging purposes we will print fall through cases
+        if workingDict : # if there is uncommitted data
+            None
+            # add the dictionary of data remaining to the larger dictionary of data. 
 
 # call sorting functions that call the plotting functions
 

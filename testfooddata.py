@@ -1,5 +1,5 @@
 import unittest
-from fooddata import typeOfLine, singlelineToDict, seriousRowDecoder , violationsToList  , additonalViolations
+from fooddata import typeOfLine, singlelineToDict, seriousRowDecoder , violationsToList  , additonalViolations , makeChart
 #from testFile import testFunction
 #to test simply run 'python boilerplatetester.py'
 
@@ -124,6 +124,18 @@ class fooddataTestCase(unittest.TestCase):
         results = violationsToList(testCase)
         expectedResult =  [r'18. NO EVIDENCE OF RODENT OR INSECT OUTER OPENINGS PROTECTED/RODENT PROOFED, A WRITTEN LOG SHALL BE MAINTAINED AVAILABLE TO THE INSPECTORS - Comments:  | ', r'32. FOOD AND NON-FOOD CONTACT SURFACES PROPERLY DESIGNED, CONSTRUCTED AND MAINTAINED - Comments:  | ', r'34. FLOORS: CONSTRUCTED PER CODE, CLEANED, GOOD REPAIR, COVERING INSTALLED, DUST-LESS CLEANING METHODS USED - Comments:  | ', r'35. WALLS, CEILINGS, ATTACHED EQUIPMENT CONSTRUCTED PER CODE: GOOD REPAIR, SURFACES CLEAN AND DUST-LESS CLEANING METHODS - Comments:  | ', r'36. LIGHTING: REQUIRED MINIMUM FOOT-CANDLES OF LIGHT PROVIDED, FIXTURES SHIELDED - Comments:  | ', r'40. REFRIGERATION AND METAL STEM THERMOMETERS PROVIDED AND CONSPICUOUS - Comments: "']
         self.assertEqual(results, expectedResult )
-        
+    def test_makeChart(self):
+        testCase = dict()
+        testCase["control chart title"] = 'testchar.htm'
+        testCase["control chart options"] = """
+        var options = {
+          title: 'testchar',
+          is3D: true,
+        };
+        """
+        testCase['six'] = 6
+        testCase['one'] = 1
+        testCase['three'] = 3 
+        self.assertTrue(not makeChart(testCase) )
 if __name__ == '__main__':
     unittest.main()
