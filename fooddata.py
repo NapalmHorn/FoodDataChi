@@ -93,8 +93,19 @@ def makeChart(chartableDict):
 
 def inspectionResults(foodDict) :
     """This makes a very basic pie chart that shows how often eateries pass inspection  """  
-    # pull out inspection data
+    # pull out chart data
     iDict = {}
+    if 'control chart title' in foodDict:
+        iDict['control chart title'] = foodDict ['control chart title']
+        del foodDict ['control chart title']
+    if 'control chart options' in foodDict:
+        iDict['control chart options'] = foodDict ['control chart options']
+        del foodDict ['control chart options']
+    for i in foodDict.keys() : # for each inspection 
+        if foodDict[i]['Results'] in iDict.keys(): #If the result is in the dict
+            iDict[ foodDict[i]['Results'] ] += 1 # increase the tally
+        else:
+            iDict[ foodDict[i]['Results'] ] = 1 # start a new tally
     return makeChart(iDict)
 
 def commonViolationsChart(foodDict):
@@ -184,10 +195,13 @@ def singlelineToDict(row):
     returnable['Location'] = hackedrow[-2] + ',' + hackedrow[-1]
     hackedrow.pop(-1)
     hackedrow.pop(-1)
-    while labelspart2: # handle everything after the weird results sections
+    while labelspart2 and hackedrow: # handle everything after the weird results sections
         returnable[ labelspart2.pop(-1)] = hackedrow.pop(-1)
     #dump the rest of hackedrow into results entry for violations
-    hackedrow_results = hackedrow.pop(0)
+    if hackedrow: # handles the possible case of 0 violations 
+        hackedrow_results = hackedrow.pop(0)
+    else:
+        hackedrow_results = ''
     while hackedrow:
         hackedrow_results += ',' + hackedrow.pop(0)
     returnable['Violations' ] = hackedrow_results
@@ -256,9 +270,9 @@ def main():
             if rowType == 'singleline':
                 # add the dictionary of data from the single to the larger dictionary of data.
                 # commit working data 
-                if not workingDict['License'] in chiDict.keys():
+                if not workingDict['InspectionID'] in chiDict.keys():
                     # I should split up violations into a more useful data structure.
-                    chiDict[ workingDict['License']] = workingDict
+                    chiDict[ workingDict['InspectionID']] = workingDict
                 else:
                     # add to existing data
                     None
