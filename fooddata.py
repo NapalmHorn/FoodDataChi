@@ -103,24 +103,45 @@ def makeChart(chartableDict):
     return None
 
 def inspectionResults(foodDict) :
-    """This makes a very basic pie chart that shows how often eateries pass inspection  """  
+    """This makes a very basic pie chart that shows how often eateries pass inspection  
+    Fix to only return top 2 """  
     # pull out chart data
     iDict = {}
+    chartDictSize = 2
+    
     if 'control open chart' in foodDict:
         iDict['control open chart'] = foodDict ['control open chart']
+        chartDictSize += 1
         del foodDict ['control open chart']
     if 'control chart title' in foodDict:
         iDict['control chart title'] = foodDict ['control chart title']
         del foodDict ['control chart title']
+        chartDictSize += 1
     if 'control chart options' in foodDict:
         iDict['control chart options'] = foodDict ['control chart options']
         del foodDict ['control chart options']
+        chartDictSize += 1
     for i in foodDict.keys() : # for each inspection 
         if foodDict[i]['Results'] in iDict.keys(): #If the result is in the dict
             iDict[ foodDict[i]['Results'] ] += 1 # increase the tally
         else:
             iDict[ foodDict[i]['Results'] ] = 1 # start a new tally
-    return makeChart(iDict)
+    #only use top restaurant types        
+    def lastest(l): return l[-1]  # inline function defined
+    sortRTypes = list()
+    chartableDict = dict()
+    for i in iDict.keys():
+        sortRTypes.append( (i , iDict[i]) )
+    if len(sortRTypes) <= chartDictSize: # if there is not enough data to need to cut some off.
+        while sortRTypes:
+            rtype, tally = sortRTypes.pop(0) 
+            chartableDict[rtype] = tally  
+        return makeChart(chartableDict)
+    sortRTypes = sorted(sortRTypes, key=lastest, reverse = True) # gives a sorted list touples starting with the biggest
+    while len(chartableDict) < chartDictSize: # will build up the final list of violation data
+        rtype, tally = sortRTypes.pop(0) 
+        chartableDict[rtype] = tally
+    return makeChart(chartableDict)
 
 def commonViolationsChart(foodDict):
     """Prints a pie chart demonstrating the most common violations of health code cited """    
@@ -152,7 +173,7 @@ def commonViolationsChart(foodDict):
             else:
                 vDict[ violationNumber ] = 1 # start a new tally
                 #create a working xrefernce table for better labels
-                xrefernce [violationNumber] = violation
+                xrefernce [violationNumber] = violation[rev.start(1):72+rev.start(1)]
     def lastest(l): return l[-1]  # inline function defined
     for i in vDict.keys():
         sortViolations.append( (xrefernce[i] , vDict[i]) )
@@ -168,24 +189,44 @@ def commonViolationsChart(foodDict):
     return makeChart(chartableDict)
 
 def restaurantsTypes(foodDict):
-    """Prints a pie chart demonstrating the proportions of restaurant types"""    
+    """Prints a pie chart demonstrating the proportions of restaurant types
+    Fixed to only show top results """    
+    chartDictSize = 10
     rDict = dict()
     if 'control open chart' in foodDict:
         rDict['control open chart'] = foodDict ['control open chart']
+        chartDictSize += 1
         del foodDict ['control open chart']
     if 'control chart title' in foodDict:
         rDict['control chart title'] = foodDict ['control chart title']
         del foodDict ['control chart title']
+        chartDictSize += 1
     if 'control chart options' in foodDict:
         rDict['control chart options'] = foodDict ['control chart options']
         del foodDict ['control chart options']
+        chartDictSize += 1
     for i in foodDict.keys() : # for each inspection 
         if re.search('\S',foodDict[i]['FacilityType']): # has non-space characters
             if foodDict[i]['FacilityType'] in rDict.keys(): #If the 'FacilityType' is in the dict
                 rDict[ foodDict[i]['FacilityType'] ] += 1 # increase the tally
             else:
                 rDict[ foodDict[i]['FacilityType'] ] = 1 # otherwise start a new tally
-    return makeChart(rDict)
+    #only use top restaurant types        
+    def lastest(l): return l[-1]  # inline function defined
+    sortRTypes = list()
+    chartableDict = dict()
+    for i in rDict.keys():
+        sortRTypes.append( (i , rDict[i]) )
+    if len(sortRTypes) <= chartDictSize: # if there is not enough data to need to cut some off.
+        while sortRTypes:
+            rtype, tally = sortRTypes.pop(0) 
+            chartableDict[rtype] = tally  
+        return makeChart(chartableDict)
+    sortRTypes = sorted(sortRTypes, key=lastest, reverse = True) # gives a sorted list touples starting with the biggest
+    while len(chartableDict) < chartDictSize: # will build up the final list of violation data
+        rtype, tally = sortRTypes.pop(0) 
+        chartableDict[rtype] = tally
+    return makeChart(chartableDict)
 
 def additonalViolations(struct, row):
     """
@@ -231,7 +272,7 @@ def relativeRisk(foodDict):
         rDict['control chart options'] = foodDict ['control chart options']
         del foodDict ['control chart options']
     for i in foodDict.keys() : # for each inspection 
-        if re.search('\S',foodDict[i]['Risk']): # has non-space characters
+        if re.search('RISK',foodDict[i]['Risk']): # has the word risk 
             if foodDict[i]['Risk'] in rDict.keys(): #If the 'Risk' is in the dict
                 rDict[ foodDict[i]['Risk'] ] += 1 # increase the tally
             else:
@@ -275,11 +316,19 @@ def singlelineToDict(row):
     labelspart2 = [ 'Latitude', 'Longitude']
     # assign and remove the first remaining datum in the hackedrow to the first remaining label which will also be removed
     while labelspart1: # handle everything before the weird results sections
-        returnable[ labelspart1.pop(0)] = hackedrow.pop(0).upper()
+        if hackedrow:
+            returnable[ labelspart1.pop(0)] = hackedrow.pop(0).upper()
+        else:
+            returnable[ labelspart1.pop(0)] = ''
+            # print 'error in row' , row[:32] ,'...', row[-8:] 
+            return dict() #this is bad row and should be ignored 
     #location is actually the last 2 values
-    returnable['Location'] = hackedrow[-2] + ',' + hackedrow[-1]
-    hackedrow.pop(-1)
-    hackedrow.pop(-1)
+    if len(hackedrow) >= 2:
+        returnable['Location'] = hackedrow[-2] + ',' + hackedrow[-1]
+        hackedrow.pop(-1)
+        hackedrow.pop(-1)
+    else:
+        returnable['Location'] = ''
     while labelspart2 and hackedrow: # handle everything after the weird results sections
         returnable[ labelspart2.pop(-1)] = hackedrow.pop(-1)
     #dump the rest of hackedrow into results entry for violations
@@ -344,42 +393,82 @@ def main():
     chiDict =dict() # the large dictionary of all lines processed
     workingDict = dict() #the current working file before committing to chiDict
     # read the whole file
-    with open('data\food.csv', 'r') as csvfile:
-        # Parse based on csv lib
-        chiData = csv.reader( csvfile )
-        for row in chiData:
-            #Each row read from the csv file is returned as a list of strings. No automatic data type conversion is performed.
-            # try a regular expression match to a pattern
-            rowType = typeOfLine(row)
-            #if it works process data
-            if rowType == 'singleline':
-                # add the dictionary of data from the single to the larger dictionary of data.
-                # commit working data 
-                if not workingDict['InspectionID'] in chiDict.keys():
-                    # I should split up violations into a more useful data structure.
-                    chiDict[ workingDict['InspectionID']] = workingDict
-                else:
-                    # add to existing data
-                    None
-                workingDict = singlelineToDict(row)   
-            elif rowType == 'serious':
-                seriousDict = seriousRowDecoder(row)
-                # add this to the serious violations database and add it to the appropriate entry in the main database
+    csvfile = open('food.csv', 'r')
+    # Parse based on csv lib
+    #chiData = csv.reader( csvfile )
+    row = csvfile.readline()
+    while row:
+        #Each row read from the csv file is returned as a list of strings. No automatic data type conversion is performed.
+        # try a regular expression match to a pattern
+        rowType = typeOfLine(row)
+        #if it works process data
+        if rowType == 'singleline':
+        # add the dictionary of data from the single to the larger dictionary of data.
+        # commit working data 
+            if workingDict:
+                # I should split up violations into a more useful data structure.
+                chiDict[ workingDict['InspectionID']] = workingDict
+            else:
+                # add to existing data
                 None
-            elif rowType == 'blank':
-                # do nothing its a blank line
-                None
-            elif rowType == 'cont' :
+            workingDict = singlelineToDict(row)   
+        elif rowType == 'serious':
+            #seriousDict = seriousRowDecoder(row)
+            # add this to the serious violations database and add it to the appropriate entry in the main database
+            None
+        elif rowType == 'blank':
+            # do nothing its a blank line
+            None
+        elif rowType == 'cont' :
+            if workingDict:
                 workingDict = additonalViolations(workingDict, row)
+            else:
                 None
             #else try the alternate patterns
-        if workingDict : # if there is uncommitted data
-            None
+        row = csvfile.readline()
+    if workingDict : # if there is uncommitted data
+            chiDict[ workingDict['InspectionID']] = workingDict
             # add the dictionary of data remaining to the larger dictionary of data. 
-
+    csvfile.close()
+    chiDict["control open chart"] = False # control to open the chart in a web browser
+    chiDict["control chart title"] = 'inspectionResultsTest.htm'
+    chiDict["control chart options"] = """
+        var options = {
+          title: 'Inspection Results',
+          is3D: true,
+        };
+        """
+    inspectionResults(chiDict) #results chart
+    chiDict["control open chart"] = False # control to open the chart in a web browser
+    chiDict["control chart title"] = 'relativeRisk.htm'
+    chiDict["control chart options"] = """
+        var options = {
+          title: 'relativeRisk',
+          is3D: true,
+        };
+        """
+    relativeRisk(chiDict) #risk chart
+    chiDict["control open chart"] = False # control to open the chart in a web browser
+    chiDict["control chart title"] = 'restaurantsTypes.htm'
+    chiDict["control chart options"] = """
+        var options = {
+          title: 'restaurantsTypes',
+          is3D: true,
+        };
+        """
+    restaurantsTypes(chiDict) #types of restaurants
+    chiDict["control open chart"] = False # control to open the chart in a web browser
+    chiDict["control chart title"] = 'commonViolations.htm'
+    chiDict["control chart options"] = """
+        var options = {
+          title: 'commonViolations',
+          is3D: true,
+        };
+        """
+    commonViolationsChart(chiDict) #common violations
 # call sorting functions that call the plotting functions
 
 # Standard boilerplate to call the main() function to begin
 # the program.
-# if __name__ == '__main__'
-    # main()
+if __name__ == '__main__':
+    main()
