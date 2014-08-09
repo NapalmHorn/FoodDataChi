@@ -83,8 +83,13 @@ def makeChart(chartableDict):
     for datum in chartableDict.keys():
         # add a label and data row to the htmlDataChart
         if htmlDataChart:
-            htmlDataChart +=',' # if its not blank put a comma at the end, saves unneeded trailing comma 
-        htmlDataChart += "\n          ['" + str(datum) + "',   " + str(chartableDict[datum]) + '  ]' 
+            htmlDataChart +=',' # if its not blank put a comma at the end, saves unneeded trailing comma         
+        if datum.find("'") + 1 : # fix raw ' in labels 
+            fixed_datum = datum
+            fixed_datum = fixed_datum.replace("'","feet")
+            htmlDataChart += "\n          ['" + fixed_datum  + "',   " + str(chartableDict[datum]) + '  ]' 
+        else: 
+            htmlDataChart += "\n          ['" + str(datum) + "',   " + str(chartableDict[datum]) + '  ]' 
     htmlDataChart += '\n        ]);\n'    #close chart
     # write all 4 parts of HTML to the file.
     f = open( controlChartTitle ,'w')
@@ -101,6 +106,9 @@ def inspectionResults(foodDict) :
     """This makes a very basic pie chart that shows how often eateries pass inspection  """  
     # pull out chart data
     iDict = {}
+    if 'control open chart' in foodDict:
+        iDict['control open chart'] = foodDict ['control open chart']
+        del foodDict ['control open chart']
     if 'control chart title' in foodDict:
         iDict['control chart title'] = foodDict ['control chart title']
         del foodDict ['control chart title']
@@ -116,12 +124,55 @@ def inspectionResults(foodDict) :
 
 def commonViolationsChart(foodDict):
     """Prints a pie chart demonstrating the most common violations of health code cited """    
+    chartDictSize = 6
+    vDict = dict() # working tally of voilations by number
+    xrefernce = dict() # crossreference of violation number and human readable name
+    chartableDict = dict() # most common 5 violations for pie chart
+    sortViolations = list() # a sortable list of touples.
+    vNumberPattern =  '([\d]+)\.\s+'
+    if 'control open chart' in foodDict:
+        chartableDict['control open chart'] = foodDict ['control open chart']
+        chartDictSize += 1
+        del foodDict ['control open chart']
+    if 'control chart title' in foodDict:
+        chartDictSize += 1
+        chartableDict['control chart title'] = foodDict ['control chart title']
+        del foodDict ['control chart title']
+    if 'control chart options' in foodDict:
+        chartDictSize += 1
+        chartableDict['control chart options'] = foodDict ['control chart options']
+        del foodDict ['control chart options']
     # pull out violation data
-    return makeChart(vDict)
+    for i in foodDict.keys() : # for each inspection 
+        for violation in foodDict[i]['Violations']:
+            rev = re.search(vNumberPattern, violation)
+            violationNumber = rev.group(1)
+            if violationNumber in vDict.keys(): #If the result is in the dict
+                vDict[ violationNumber ] += 1 # increase the tally
+            else:
+                vDict[ violationNumber ] = 1 # start a new tally
+                #create a working xrefernce table for better labels
+                xrefernce [violationNumber] = violation
+    def lastest(l): return l[-1]  # inline function defined
+    for i in vDict.keys():
+        sortViolations.append( (xrefernce[i] , vDict[i]) )
+    if len(sortViolations) <= chartDictSize: # if there is not enough data to need to cut some off.
+        while sortViolations:
+            violation, tally = sortViolations.pop(0) 
+            chartableDict[violation] = tally  
+        return makeChart(chartableDict)
+    sortViolations = sorted(sortViolations, key=lastest, reverse = True) # gives a sorted list touples starting with the biggest
+    while len(chartableDict) < chartDictSize: # will build up the final list of violation data
+        violation, tally = sortViolations.pop(0) 
+        chartableDict[violation] = tally  
+    return makeChart(chartableDict)
 
 def restaurantsTypes(foodDict):
     """Prints a pie chart demonstrating the proportions of restaurant types"""    
     rDict = dict()
+    if 'control open chart' in foodDict:
+        rDict['control open chart'] = foodDict ['control open chart']
+        del foodDict ['control open chart']
     if 'control chart title' in foodDict:
         rDict['control chart title'] = foodDict ['control chart title']
         del foodDict ['control chart title']
@@ -141,9 +192,7 @@ def additonalViolations(struct, row):
     This function will take a uncommitted data structure of an inspection line
     and add its continuation to the violations list.
     """
-
     struct['Violations'] += violationsToList(row) 
-
     return struct
     
 def violationsToList(str):
@@ -168,9 +217,26 @@ def violationsToList(str):
         return violations
         
 def relativeRisk(foodDict):
-    """makes a bar chart comparing the violation percentage by restaurant type"""
+    """makes a pie chart comparing the violation percentage by restaurant type"""
     #for each violation keep of tally of the associated restaurant type
     #compare to the total number restaurants in that type
+    rDict = dict()
+    if 'control open chart' in foodDict:
+        rDict['control open chart'] = foodDict ['control open chart']
+        del foodDict ['control open chart']
+    if 'control chart title' in foodDict:
+        rDict['control chart title'] = foodDict ['control chart title']
+        del foodDict ['control chart title']
+    if 'control chart options' in foodDict:
+        rDict['control chart options'] = foodDict ['control chart options']
+        del foodDict ['control chart options']
+    for i in foodDict.keys() : # for each inspection 
+        if re.search('\S',foodDict[i]['Risk']): # has non-space characters
+            if foodDict[i]['Risk'] in rDict.keys(): #If the 'Risk' is in the dict
+                rDict[ foodDict[i]['Risk'] ] += 1 # increase the tally
+            else:
+                rDict[ foodDict[i]['Risk'] ] = 1 # otherwise start a new tally
+    return makeChart(rDict)
 
 def typeOfLine(row):
     """this csv has many types of rows thrown together.  This fuction returns the type of row."""
