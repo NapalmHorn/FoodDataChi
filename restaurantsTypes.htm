@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Label', 'Data'],
+          ['SCHOOL',   4034  ],
+          ['LIQUOR',   337  ],
+          ['MOBILE FOOD DISPENSER',   410  ],
+          ['RESTAURANT',   32948  ],
+          ['WHOLESALE',   339  ],
+          ['DAYCARE COMBO 1586',   761  ],
+          ['BAKERY',   705  ],
+          [' INC"',   434  ],
+          ['DAYCARE (2 - 6 YEARS)',   1467  ],
+          [' INC."',   1257  ],
+          ['GROCERY STORE',   7565  ]
+        ]);
+
+        var options = {
+          title: 'restaurantsTypes',
+          is3D: true,
+        };
+        
+        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+        chart.draw(data, options);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="piechart_3d" style="width: 900px; height: 500px;"></div>
+  </body>
+</html>
+    
