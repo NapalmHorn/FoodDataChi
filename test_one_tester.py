@@ -17,11 +17,12 @@ class oneFuntionTester(unittest.TestCase):
             if rowType == 'singleline': # try to decode the line
                 if not singlelineToDict(row):
                     rowFalures += 1
+                    #print row[:40], '...' , row[-40:-2] , rowsRead #great diagnostic data
             row = csvfile.readline()
         # if it fails to encode increment failure counter 
         # make a chart of the successes and failures 
         testCase = dict()
-        testCase["control open chart"] = True
+        testCase["control open chart"] = False
         testCase["control chart title"] = 'RowRead.htm'
         testCase["control chart options"] = """
         var options = {

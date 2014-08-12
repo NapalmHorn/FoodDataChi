@@ -281,9 +281,9 @@ def relativeRisk(foodDict):
 
 def typeOfLine(row):
     """this csv has many types of rows thrown together.  This fuction returns the type of row."""
-    keyRE = '\d+' 
+    keyRE = '[\d]+,' 
     # re to match 'Inspection ID,DBA Name,AKA Name,License #,Facility Type,Risk,Address,City,State,Zip,Inspection Date,Inspection Type,Results,Violations,Latitude,Longitude,Location' 
-    if re.match(keyRE, row.split(',')[0]) :
+    if re.match(keyRE, row):
         return 'singleline'
     keyRE = r' | ' # re to match '| list of violations'
     if keyRE == row[:3] or row[0] == '#':
